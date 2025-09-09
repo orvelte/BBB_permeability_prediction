@@ -1,10 +1,6 @@
 # Blood-Brain Barrier (BBB) Permeability Prediction
 
-A machine learning project that predicts whether drugs can cross the Blood-Brain Barrier (BBB) using molecular descriptors and cheminformatics techniques.
-
-## Overview
-
-The Blood-Brain Barrier (BBB) is a selective barrier that prevents most drugs from reaching the brain. This project uses RDKit to extract molecular descriptors from drug SMILES notation and applies machine learning techniques to predict BBB permeability.
+This project uses RDKit to extract molecular descriptors from drug SMILES notation and applies machine learning techniques to predict Blood Brain Barrier (BBB) permeability.
 
 ## Features
 
