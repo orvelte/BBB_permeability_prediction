@@ -4,10 +4,10 @@ This project uses RDKit to extract molecular descriptors from drug SMILES notati
 
 ## Features
 
-- **Molecular Analysis**: Extract 200+ molecular descriptors from SMILES notation
-- **Similarity Analysis**: Compare molecular similarity using Morgan fingerprints and Tanimoto coefficients
-- **Exploratory Data Analysis**: Comprehensive EDA with PCA visualization
-- **Machine Learning Ready**: Prepared for classification models to predict BBB permeability
+- Molecular Analysis: Extract 200+ molecular descriptors from SMILES notation
+- Similarity Analysis: Compare molecular similarity using Morgan fingerprints and Tanimoto coefficients
+- Exploratory Data Analysis: Comprehensive EDA with PCA visualization
+- Prepared for classification models to predict BBB permeability
 
 ## Project Structure
 
