@@ -37,6 +37,14 @@ run-sample:  ## Run with sample data
 	cp data/sample_data.csv data/BBB_datasets.csv
 	python src/bbb.py
 
+predict:  ## Predict BBB permeability for new molecules
+	@echo "Usage: make predict SMILES='CC(=O)NC1=CC=C(C=C1)O'"
+	@if [ -z "$(SMILES)" ]; then \
+		echo "Please provide SMILES: make predict SMILES='your_smiles_here'"; \
+	else \
+		python src/predict_bbb.py $(SMILES); \
+	fi
+
 clean:  ## Clean up generated files
 	find . -type f -name "*.pyc" -delete
 	find . -type d -name "__pycache__" -delete

@@ -5,6 +5,7 @@ numpy>=1.21.0
 matplotlib>=3.5.3
 seaborn>=0.11.0
 scikit-learn>=1.1.0
+joblib>=1.2.0
 
 # Jupyter notebook support
 jupyter>=1.0.0

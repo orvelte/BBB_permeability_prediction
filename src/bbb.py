@@ -16,8 +16,15 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 import seaborn as sns
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.decomposition import PCA
+from sklearn.model_selection import train_test_split, cross_val_score, GridSearchCV
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.svm import SVC
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import classification_report, confusion_matrix, accuracy_score, roc_auc_score, roc_curve
+import joblib
+import os
 
 from rdkit import Chem
 from rdkit import DataStructs
@@ -174,5 +181,174 @@ plt.legend(handles=legend_elements, title='BBB Permeability')
 
 plt.tight_layout()
 plt.show()
+
+# Machine Learning Implementation
+print("\n=== Machine Learning Model Training ===")
+
+# Prepare features and labels
+X = desc_df_scaled  # Already standardized features
+y = class_values    # BBB permeability labels
+
+# Encode labels to numerical values
+label_encoder = LabelEncoder()
+y_encoded = label_encoder.fit_transform(y)
+
+print(f"Feature matrix shape: {X.shape}")
+print(f"Label distribution: {np.bincount(y_encoded)}")
+print(f"Classes: {label_encoder.classes_}")
+
+# Split the data
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y_encoded, test_size=0.2, random_state=42, stratify=y_encoded
+)
+
+print(f"Training set size: {X_train.shape[0]}")
+print(f"Test set size: {X_test.shape[0]}")
+
+# Define models to train
+models = {
+    'Random Forest': RandomForestClassifier(n_estimators=100, random_state=42),
+    'SVM': SVC(probability=True, random_state=42),
+    'Logistic Regression': LogisticRegression(random_state=42, max_iter=1000)
+}
+
+# Train and evaluate models
+results = {}
+trained_models = {}
+
+for name, model in models.items():
+    print(f"\n--- Training {name} ---")
+    
+    # Train the model
+    model.fit(X_train, y_train)
+    
+    # Make predictions
+    y_pred = model.predict(X_test)
+    y_pred_proba = model.predict_proba(X_test)[:, 1] if hasattr(model, 'predict_proba') else None
+    
+    # Calculate metrics
+    accuracy = accuracy_score(y_test, y_pred)
+    cv_scores = cross_val_score(model, X_train, y_train, cv=5, scoring='accuracy')
+    
+    # Store results
+    results[name] = {
+        'accuracy': accuracy,
+        'cv_mean': cv_scores.mean(),
+        'cv_std': cv_scores.std(),
+        'predictions': y_pred,
+        'probabilities': y_pred_proba
+    }
+    trained_models[name] = model
+    
+    print(f"Accuracy: {accuracy:.3f}")
+    print(f"CV Accuracy: {cv_scores.mean():.3f} (+/- {cv_scores.std() * 2:.3f})")
+    
+    # Classification report
+    print("\nClassification Report:")
+    print(classification_report(y_test, y_pred, target_names=label_encoder.classes_))
+
+# Feature Importance Analysis (for Random Forest)
+print("\n=== Feature Importance Analysis ===")
+rf_model = trained_models['Random Forest']
+feature_importance = rf_model.feature_importances_
+
+# Get top 20 most important features
+top_features_idx = np.argsort(feature_importance)[-20:]
+top_features_names = [cols_mols[i] for i in top_features_idx]
+top_features_importance = feature_importance[top_features_idx]
+
+print("Top 20 Most Important Molecular Descriptors:")
+for name, importance in zip(top_features_names, top_features_importance):
+    print(f"{name}: {importance:.4f}")
+
+# Plot feature importance
+plt.figure(figsize=(12, 8))
+plt.barh(range(len(top_features_names)), top_features_importance)
+plt.yticks(range(len(top_features_names)), top_features_names)
+plt.xlabel('Feature Importance')
+plt.title('Top 20 Most Important Molecular Descriptors (Random Forest)')
+plt.tight_layout()
+plt.show()
+
+# Model Comparison
+print("\n=== Model Comparison ===")
+comparison_df = pd.DataFrame({
+    'Model': list(results.keys()),
+    'Test Accuracy': [results[name]['accuracy'] for name in results.keys()],
+    'CV Accuracy (Mean)': [results[name]['cv_mean'] for name in results.keys()],
+    'CV Accuracy (Std)': [results[name]['cv_std'] for name in results.keys()]
+})
+
+print(comparison_df.to_string(index=False))
+
+# Plot model comparison
+plt.figure(figsize=(10, 6))
+x_pos = np.arange(len(results))
+plt.bar(x_pos, [results[name]['accuracy'] for name in results.keys()], 
+        yerr=[results[name]['cv_std'] for name in results.keys()], 
+        capsize=5, alpha=0.7)
+plt.xlabel('Models')
+plt.ylabel('Accuracy')
+plt.title('Model Performance Comparison')
+plt.xticks(x_pos, list(results.keys()), rotation=45)
+plt.ylim(0, 1)
+plt.tight_layout()
+plt.show()
+
+# Confusion Matrix for best model
+best_model_name = max(results.keys(), key=lambda x: results[x]['accuracy'])
+best_model = trained_models[best_model_name]
+y_pred_best = results[best_model_name]['predictions']
+
+plt.figure(figsize=(8, 6))
+cm = confusion_matrix(y_test, y_pred_best)
+sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', 
+            xticklabels=label_encoder.classes_, 
+            yticklabels=label_encoder.classes_)
+plt.title(f'Confusion Matrix - {best_model_name}')
+plt.ylabel('True Label')
+plt.xlabel('Predicted Label')
+plt.tight_layout()
+plt.show()
+
+# ROC Curve (if probabilities available)
+if results[best_model_name]['probabilities'] is not None:
+    plt.figure(figsize=(8, 6))
+    fpr, tpr, _ = roc_curve(y_test, results[best_model_name]['probabilities'])
+    auc_score = roc_auc_score(y_test, results[best_model_name]['probabilities'])
+    
+    plt.plot(fpr, tpr, label=f'{best_model_name} (AUC = {auc_score:.3f})')
+    plt.plot([0, 1], [0, 1], 'k--', label='Random')
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.title('ROC Curve')
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+
+# Save trained models
+print("\n=== Saving Models ===")
+os.makedirs('../results/models', exist_ok=True)
+
+for name, model in trained_models.items():
+    model_path = f'../results/models/{name.lower().replace(" ", "_")}_model.pkl'
+    joblib.dump(model, model_path)
+    print(f"Saved {name} model to {model_path}")
+
+# Save label encoder
+joblib.dump(label_encoder, '../results/models/label_encoder.pkl')
+print("Saved label encoder")
+
+# Save scaler
+joblib.dump(scaler, '../results/models/feature_scaler.pkl')
+print("Saved feature scaler")
+
+# Save feature names
+joblib.dump(cols_mols, '../results/models/feature_names.pkl')
+print("Saved feature names")
+
+print("\n=== Machine Learning Analysis Complete ===")
+print(f"Best performing model: {best_model_name}")
+print(f"Best accuracy: {results[best_model_name]['accuracy']:.3f}")
 
 print("Script completed successfully!")

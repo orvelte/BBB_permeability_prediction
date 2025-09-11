@@ -11,7 +11,8 @@ The Blood-Brain Barrier (BBB) is a selective barrier that prevents most drugs fr
 - **Molecular Analysis**: Extract 200+ molecular descriptors from SMILES notation
 - **Similarity Analysis**: Compare molecular similarity using Morgan fingerprints and Tanimoto coefficients
 - **Exploratory Data Analysis**: Comprehensive EDA with PCA visualization
-- **Machine Learning Ready**: Prepared for classification models to predict BBB permeability
+- **Machine Learning Models**: Implemented Random Forest, SVM, and Logistic Regression for BBB prediction
+- **Model Evaluation**: Cross-validation, confusion matrices, ROC curves, and feature importance analysis
 
 ## Project Structure
 
@@ -25,7 +26,9 @@ BBB_permeability_prediction/
 │   ├── sample_data.csv      # Sample dataset
 │   └── README.md           # Data documentation
 ├── src/                     # Source code
-│   └── bbb.py              # Main analysis script
+│   ├── bbb.py              # Main analysis script
+│   ├── ml_models.py        # Machine learning models
+│   └── predict_bbb.py      # Prediction script
 ├── notebooks/               # Jupyter notebooks
 │   └── bbb_analysis.ipynb  # Interactive analysis
 ├── docs/                    # Documentation
@@ -76,6 +79,16 @@ pip install -r requirements.txt
 python src/bbb.py
 ```
 
+3. Predict BBB permeability for new molecules:
+```bash
+python src/predict_bbb.py "CC(=O)NC1=CC=C(C=C1)O" "CN1C=NC2=C1C(=O)N(C(=O)N2C)C"
+```
+
+Or using Makefile:
+```bash
+make predict SMILES="CC(=O)NC1=CC=C(C=C1)O"
+```
+
 ### Jupyter Notebook
 
 For interactive analysis, use the Jupyter notebook:
@@ -109,6 +122,11 @@ The script generates:
 - PCA visualization of molecular descriptors
 - Statistical summaries of the dataset
 - Plots showing drug clustering by BBB permeability
+- **Machine learning model training and evaluation**
+- **Feature importance analysis**
+- **Model performance comparison**
+- **Confusion matrices and ROC curves**
+- **Trained models saved for future predictions**
 
 ## Example Molecules Analyzed
 
@@ -143,11 +161,38 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - RDKit community for the excellent cheminformatics toolkit
 - Original Colab notebook: [BBB Analysis](https://colab.research.google.com/drive/1_GQPuZw-g0EQ_iQDrTdlFZJ8BBIE_7OS)
 
+## Machine Learning Models
+
+The project implements three machine learning algorithms:
+
+### 1. Random Forest Classifier
+- **Advantages**: Handles non-linear relationships, provides feature importance
+- **Parameters**: 100 estimators, max depth 10, min samples split 5
+- **Use Case**: Best for interpretable predictions with feature importance
+
+### 2. Support Vector Machine (SVM)
+- **Advantages**: Effective for high-dimensional data, good generalization
+- **Parameters**: RBF kernel, C=1.0, gamma='scale'
+- **Use Case**: Good performance on molecular descriptor data
+
+### 3. Logistic Regression
+- **Advantages**: Fast training, interpretable coefficients
+- **Parameters**: C=1.0, max iterations 1000
+- **Use Case**: Baseline model and fast predictions
+
+### Model Evaluation
+- **Cross-validation**: 5-fold CV for robust performance estimation
+- **Metrics**: Accuracy, precision, recall, F1-score, AUC-ROC
+- **Feature Importance**: Top 20 most important molecular descriptors
+- **Visualization**: Confusion matrices, ROC curves, performance comparison
+
 ## Future Enhancements
 
-- [ ] Implement machine learning models (Random Forest, SVM, Neural Networks)
-- [ ] Add feature importance analysis
-- [ ] Cross-validation and model evaluation
+- [x] Implement machine learning models (Random Forest, SVM, Logistic Regression)
+- [x] Add feature importance analysis
+- [x] Cross-validation and model evaluation
+- [ ] Hyperparameter tuning with GridSearch
+- [ ] Neural Networks (Deep Learning)
 - [ ] Web interface for drug prediction
 - [ ] API for batch processing
 - [ ] Integration with drug databases
